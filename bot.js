@@ -118,6 +118,8 @@ async function syncSheet() {
           continue;
         }
 
+        if (section !== 'active') continue;
+
         const driver = row[colMap['DRIVERS'] ?? 2]?.trim();
         if (!driver || /^#?\d*$/.test(driver)) continue;
 
@@ -128,7 +130,7 @@ async function syncSheet() {
           if (idx === undefined) continue;
           const date = parseDate(row[idx]);
           if (date) {
-            newRecords.push({ company, driver, unit, doc: expCol, date, status: section });
+            newRecords.push({ company, driver, unit, doc: expCol, date });
           }
         }
       }

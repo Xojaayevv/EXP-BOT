@@ -333,6 +333,18 @@ cron.schedule('0 */6 * * *', async () => {
   catch (e) { console.error('Auto-sync error:', e.message); }
 });
 
+// Keep Railway happy — bind to PORT
+const http = require('http');
+const PORT = process.env.PORT || 3000;
+http.createServer((_req, res) => res.end('OK')).listen(PORT, () => {
+  console.log(`Health check listening on port ${PORT}`);
+});
+
+// Handle polling errors so bot doesn't crash
+bot.on('polling_error', (err) => console.error('Polling error:', err.message));
+process.on('unhandledRejection', (err) => console.error('Unhandled rejection:', err));
+process.on('uncaughtException', (err) => console.error('Uncaught exception:', err));
+
 // Startup sync
 syncSheet()
   .then(r => console.log(`✅ Bot started. ${r.total} records synced.`))

@@ -327,8 +327,8 @@ cron.schedule('0 8 * * *', async () => {
   } catch (e) { console.error('Daily alert error:', e.message); }
 });
 
-// Auto-sync every 5 minutes
-cron.schedule('*/5 * * * *', async () => {
+// Auto-sync every 1 minute
+cron.schedule('* * * * *', async () => {
   try { await syncSheet(); }
   catch (e) { console.error('Auto-sync error:', e.message); }
 });

@@ -148,7 +148,7 @@ async function syncSheet() {
 }
 
 async function sendAlerts(chatId, maxDays = 30) {
-  const active = records.filter(r => r.status === 'active' && daysUntil(r.date) <= maxDays);
+  const active = records.filter(r => daysUntil(r.date) <= maxDays);
 
   if (active.length === 0) {
     return bot.sendMessage(chatId, '✅ All active driver documents are valid for 30+ days.');
@@ -229,7 +229,7 @@ bot.on('callback_query', async (q) => {
   }
 
   if (q.data === 'list') {
-    const active = records.filter(r => r.status === 'active');
+    const active = records.filter(r => );
     if (active.length === 0) return bot.sendMessage(chatId, '📋 No data. Tap Sync first.');
     const byCompany = {};
     for (const r of active) {
@@ -256,7 +256,7 @@ bot.on('callback_query', async (q) => {
     const companies = [...new Set(records.map(r => r.company))].sort();
     if (companies.length === 0) return bot.sendMessage(chatId, 'No data. Tap Sync first.');
     const text = companies.map((c, i) => {
-      const count = records.filter(r => r.company === c && r.status === 'active').length;
+      const count = records.filter(r => r.company === c && ).length;
       return `${i + 1}. ${c} (${count} docs)`;
     }).join('\n');
     await bot.sendMessage(chatId, `🏢 *Companies (${companies.length})*\n\n${text}`, { parse_mode: 'Markdown' });
@@ -288,7 +288,7 @@ bot.onText(/\/check/, async (msg) => {
 
 // /list
 bot.onText(/\/list/, async (msg) => {
-  const active = records.filter(r => r.status === 'active');
+  const active = records.filter(r => );
   if (active.length === 0) return bot.sendMessage(msg.chat.id, '📋 No data. Use /sync first.');
 
   const byCompany = {};
@@ -317,7 +317,7 @@ bot.onText(/\/companies/, (msg) => {
   const companies = [...new Set(records.map(r => r.company))].sort();
   if (companies.length === 0) return bot.sendMessage(msg.chat.id, 'No data. Use /sync first.');
   const text = companies.map((c, i) => {
-    const count = records.filter(r => r.company === c && r.status === 'active').length;
+    const count = records.filter(r => r.company === c && ).length;
     return `${i + 1}. ${c} (${count} docs)`;
   }).join('\n');
   bot.sendMessage(msg.chat.id, `🏢 *Companies (${companies.length})*\n\n${text}`, { parse_mode: 'Markdown' });

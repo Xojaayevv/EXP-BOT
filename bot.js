@@ -112,9 +112,10 @@ async function syncSheet() {
 
         if (joined.includes('INACTIVE DRIVERS')) { section = 'inactive'; continue; }
         if (joined.includes('ACTIVE DRIVERS')) { section = 'active'; continue; }
-        if (row.map(c => c.toUpperCase().trim()).includes('DRIVERS') &&
-            row.map(c => c.toUpperCase().trim()).some(c => c === 'CDL EXP')) {
-          row.map(c => c.toUpperCase().trim()).forEach((col, idx) => { colMap[col] = idx; });
+        const up2 = row.map(c => c.toUpperCase().trim());
+        if (up2.includes('DRIVERS') && up2.includes('UNIT')) {
+          section = 'inactive';
+          up2.forEach((col, idx) => { if (col) colMap[col] = idx; });
           continue;
         }
 

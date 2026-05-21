@@ -172,22 +172,91 @@ async function sendAlerts(chatId, maxDays = 30) {
   }
 }
 
-// /start
-bot.onText(/\/start/, (msg) => {
-  bot.sendMessage(msg.chat.id,
+function mainMenu(chatId) {
+  return bot.sendMessage(chatId,
     `👋 *Driver Expiration Bot*\n\n` +
     `🔴 Expired or <7 days\n` +
     `🟠 7–14 days\n` +
     `🟡 15–30 days\n` +
     `🟢 30+ days\n\n` +
-    `*Commands:*\n` +
-    `🔔 /check — Expiring within 30 days\n` +
-    `📋 /list — All active drivers\n` +
-    `🔄 /sync — Sync from Google Sheet\n` +
-    `🏢 /companies — List companies\n\n` +
     `Last sync: ${lastSync || 'Not yet'}`,
-    { parse_mode: 'Markdown' }
+    {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🔔 Check Expirations', callback_data: 'check' }],
+          [{ text: '🔄 Sync Google Sheet', callback_data: 'sync' }],
+          [{ text: '📋 Full List', callback_data: 'list' }, { text: '🏢 Companies', callback_data: 'companies' }],
+        ]
+      }
+    }
   );
+}
+
+// /start
+bot.onText(/\/start/, (msg) => mainMenu(msg.chat.id));
+
+// Inline button handler
+bot.on('callback_query', async (q) => {
+  const chatId = q.message.chat.id;
+  await bot.answerCallbackQuery(q.id);
+
+  if (q.data === 'check') {
+    if (records.length === 0) return bot.sendMessage(chatId, '⚠️ No data. Tap Sync first.');
+    await bot.sendMessage(chatId, '🔍 Checking expiring documents...');
+    await sendAlerts(chatId, 30);
+    await mainMenu(chatId);
+  }
+
+  if (q.data === 'sync') {
+    const m = await bot.sendMessage(chatId, '🔄 Syncing from Google Sheet...');
+    try {
+      const r = await syncSheet();
+      await bot.editMessageText(
+        `✅ Sync done!\n📊 ${r.total} records loaded\n` +
+        (r.errors.length ? `⚠️ Failed: ${r.errors.join(', ')}` : '✅ All companies synced'),
+        { chat_id: chatId, message_id: m.message_id }
+      );
+    } catch (e) {
+      await bot.editMessageText(`❌ Error: ${e.message}`, { chat_id: chatId, message_id: m.message_id });
+    }
+    await mainMenu(chatId);
+  }
+
+  if (q.data === 'list') {
+    const active = records.filter(r => r.status === 'active');
+    if (active.length === 0) return bot.sendMessage(chatId, '📋 No data. Tap Sync first.');
+    const byCompany = {};
+    for (const r of active) {
+      if (!byCompany[r.company]) byCompany[r.company] = {};
+      if (!byCompany[r.company][r.driver]) byCompany[r.company][r.driver] = [];
+      byCompany[r.company][r.driver].push(r);
+    }
+    for (const [company, drivers] of Object.entries(byCompany)) {
+      let msg = `🏢 *${company}*\n\n`;
+      for (const [driver, docs] of Object.entries(drivers)) {
+        msg += `👤 ${driver}\n`;
+        for (const doc of docs) {
+          msg += `  ${emoji(daysUntil(doc.date))} ${doc.doc}: ${fmtDate(doc.date)}\n`;
+        }
+        msg += '\n';
+      }
+      try { await bot.sendMessage(chatId, msg, { parse_mode: 'Markdown' }); }
+      catch (e) { await bot.sendMessage(chatId, msg.replace(/[*_[\]()~>#+=|{}.!]/g, '')); }
+    }
+    await mainMenu(chatId);
+  }
+
+  if (q.data === 'companies') {
+    const companies = [...new Set(records.map(r => r.company))].sort();
+    if (companies.length === 0) return bot.sendMessage(chatId, 'No data. Tap Sync first.');
+    const text = companies.map((c, i) => {
+      const count = records.filter(r => r.company === c && r.status === 'active').length;
+      return `${i + 1}. ${c} (${count} docs)`;
+    }).join('\n');
+    await bot.sendMessage(chatId, `🏢 *Companies (${companies.length})*\n\n${text}`, { parse_mode: 'Markdown' });
+    await mainMenu(chatId);
+  }
 });
 
 // /sync

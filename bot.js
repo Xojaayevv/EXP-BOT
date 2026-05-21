@@ -15,7 +15,7 @@ const COMPANY_SHEETS = [
   'BURNING GUN LLC', 'LOCHIN EXPRESS LLC',
 ];
 
-const EXP_COLS = ['CDL EXP', 'MED CARD', 'CH EXP', 'MVR EXP', 'ANNUAL INSP'];
+const EXP_COLS = ['CDL EXP', 'MED CARD', 'CH EXP', 'MVR EXP', 'ANNUAL INSP', 'CAB CARD'];
 
 // In-memory storage
 let records = [];
@@ -87,7 +87,7 @@ async function syncSheet() {
 
   for (const company of COMPANY_SHEETS) {
     try {
-      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(company)}`;
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(company)}&t=${Date.now()}`;
       const csv = await fetchUrl(url);
       const rows = csv.split('\n').filter(l => l.trim()).map(parseCSVLine);
 

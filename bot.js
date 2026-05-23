@@ -257,8 +257,8 @@ bot.on('callback_query', async (q) => {
     const companies = [...new Set(records.map(r => r.company))].sort();
     if (companies.length === 0) return bot.sendMessage(chatId, 'No data. Tap Sync first.');
     const text = companies.map((c, i) => {
-      const count = records.filter(r => r.company === c).length;
-      return `${i + 1}. ${c} (${count} docs)`;
+      const drivers = new Set(records.filter(r => r.company === c).map(r => r.driver)).size;
+      return `${i + 1}. ${c} — ${drivers} drivers`;
     }).join('\n');
     await bot.sendMessage(chatId, `🏢 *Companies (${companies.length})*\n\n${text}`, { parse_mode: 'Markdown' });
     await mainMenu(chatId);

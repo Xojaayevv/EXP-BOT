@@ -200,23 +200,17 @@ async function sendAlerts(chatId, maxDays = 30) {
         `Please do not forget to renew it before the expiration date and send us the updated copy as soon as possible.\n\n` +
         `Thank you,\nALGO SAFETY`;
 
-      const msg =
+      const infoMsg =
         `🏢 ${company}\n\n` +
         `👤 ${doc.driver}\n` +
         `📄 ${doc.doc}\n` +
         `📅 Expires: ${expDate}\n` +
         `${em} ${d} days left\n\n` +
-        `📨 DRIVER MESSAGE:\n\n` +
-        driverMsg + `\n\n-----------------------------------`;
+        `📨 DRIVER MESSAGE: ⬇️ (hold to copy)`;
 
       try {
-        await bot.sendMessage(chatId, msg, {
-          reply_markup: {
-            inline_keyboard: [[
-              { text: '📋 Copy Driver Message', copy_text: { text: driverMsg } }
-            ]]
-          }
-        });
+        await bot.sendMessage(chatId, infoMsg);
+        await bot.sendMessage(chatId, driverMsg);
       }
       catch (e) { console.error('Send error:', e.message); }
     }

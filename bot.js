@@ -149,7 +149,7 @@ async function syncSheet() {
 }
 
 async function sendAlerts(chatId, maxDays = 30) {
-  const active = records.filter(r => { const d = daysUntil(r.date); return d >= -7 && d <= maxDays; });
+  const active = records.filter(r => { const d = daysUntil(r.date); return d >= 0 && d <= maxDays; });
 
   if (active.length === 0) {
     return bot.sendMessage(chatId, '✅ All active driver documents are valid for 30+ days.');

@@ -162,19 +162,30 @@ async function sendAlerts(chatId, maxDays = 30) {
     byCompany[r.company][r.driver].push(r);
   }
 
+  function statusLabel(days) {
+    if (days <= 0) return 'Expired';
+    if (days <= 7) return 'Critical';
+    if (days <= 14) return 'Warning';
+    if (days <= 30) return 'Notice';
+    return 'OK';
+  }
+
   for (const [company, drivers] of Object.entries(byCompany)) {
-    let msg = `🏢 *${company}*\n\n`;
     for (const [driver, docs] of Object.entries(drivers)) {
-      msg += `👤 ${driver}\n`;
       for (const doc of docs) {
         const d = daysUntil(doc.date);
-        const label = d < 0 ? `EXPIRED ${Math.abs(d)}d ago` : `${d}d left`;
-        msg += `  ${emoji(d)} ${doc.doc}: ${fmtDate(doc.date)} *(${label})*\n`;
+        const em = emoji(d);
+        const msg =
+          `🏢 Company: ${company}\n` +
+          `👤 Driver: ${driver}\n` +
+          `📄 Document: ${doc.doc}\n` +
+          `📅 Expiration: ${fmtDate(doc.date)}\n` +
+          `⏳ Days Left: ${d} days\n` +
+          `${em} Status: ${statusLabel(d)}`;
+        try { await bot.sendMessage(chatId, msg); }
+        catch (e) { console.error('Send error:', e.message); }
       }
-      msg += '\n';
     }
-    try { await bot.sendMessage(chatId, msg, { parse_mode: 'Markdown' }); }
-    catch (e) { await bot.sendMessage(chatId, msg.replace(/[*_`[\]()~>#+=|{}.!-]/g, '')); }
   }
 }
 

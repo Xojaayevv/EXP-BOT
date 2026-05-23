@@ -77,11 +77,33 @@ function fmtDate(d) {
 }
 
 function emoji(days) {
-  if (days < 0) return '🔴';
-  if (days <= 7) return '🔴';
-  if (days <= 14) return '🟠';
+  if (days <= 3) return '🔴';
+  if (days <= 10) return '🟠';
   if (days <= 30) return '🟡';
   return '🟢';
+}
+
+function statusLabel(days) {
+  if (days <= 3) return 'CRITICAL';
+  if (days <= 10) return 'WARNING';
+  if (days <= 30) return 'UPCOMING';
+  return 'OK';
+}
+
+function toTitleCase(str) {
+  return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function docLabel(doc) {
+  const map = {
+    'CDL EXP': 'CDL License',
+    'MED CARD': 'Medical Card',
+    'MVR EXP': 'MVR',
+    'CAB CARD': 'Cab Card',
+    'ANNUAL INSP': 'Annual Inspection',
+    'CH EXP': 'CH License',
+  };
+  return map[doc] || doc;
 }
 
 async function syncSheet() {
@@ -149,7 +171,9 @@ async function syncSheet() {
 }
 
 async function sendAlerts(chatId, maxDays = 30) {
-  const active = records.filter(r => { const d = daysUntil(r.date); return d >= 0 && d <= maxDays; });
+  const active = records
+    .filter(r => { const d = daysUntil(r.date); return d >= 0 && d <= maxDays; })
+    .sort((a, b) => daysUntil(a.date) - daysUntil(b.date));
 
   if (active.length === 0) {
     return bot.sendMessage(chatId, '✅ All active driver documents are valid for 30+ days.');
@@ -157,34 +181,35 @@ async function sendAlerts(chatId, maxDays = 30) {
 
   const byCompany = {};
   for (const r of active) {
-    if (!byCompany[r.company]) byCompany[r.company] = {};
-    if (!byCompany[r.company][r.driver]) byCompany[r.company][r.driver] = [];
-    byCompany[r.company][r.driver].push(r);
+    if (!byCompany[r.company]) byCompany[r.company] = [];
+    byCompany[r.company].push(r);
   }
 
-  function statusLabel(days) {
-    if (days <= 0) return 'Expired';
-    if (days <= 7) return 'Critical';
-    if (days <= 14) return 'Warning';
-    if (days <= 30) return 'Notice';
-    return 'OK';
-  }
+  for (const [company, docs] of Object.entries(byCompany)) {
+    for (const doc of docs) {
+      const d = daysUntil(doc.date);
+      const em = emoji(d);
+      const status = statusLabel(d);
+      const driverTitle = toTitleCase(doc.driver);
+      const label = docLabel(doc.doc);
+      const expDate = fmtDate(doc.date);
 
-  for (const [company, drivers] of Object.entries(byCompany)) {
-    for (const [driver, docs] of Object.entries(drivers)) {
-      for (const doc of docs) {
-        const d = daysUntil(doc.date);
-        const em = emoji(d);
-        const msg =
-          `🏢 Company: ${company}\n` +
-          `👤 Driver: ${driver}\n` +
-          `📄 Document: ${doc.doc}\n` +
-          `📅 Expiration: ${fmtDate(doc.date)}\n` +
-          `⏳ Days Left: ${d} days\n` +
-          `${em} Status: ${statusLabel(d)}`;
-        try { await bot.sendMessage(chatId, msg); }
-        catch (e) { console.error('Send error:', e.message); }
-      }
+      const msg =
+        `🏢 ${company}\n\n` +
+        `👤 ${doc.driver}\n` +
+        `📄 ${label}\n` +
+        `📅 Expires: ${expDate}\n` +
+        `${em} ${d} days left  |  ${status}\n\n` +
+        `📨 DRIVER MESSAGE:\n` +
+        `Hello ${driverTitle},\n\n` +
+        `Your ${label} will expire on ${expDate}.\n\n` +
+        `Please provide the renewed copy as soon as possible.\n\n` +
+        `Thank you,\n` +
+        `ALGO SAFETY\n\n` +
+        `-----------------------------------`;
+
+      try { await bot.sendMessage(chatId, msg); }
+      catch (e) { console.error('Send error:', e.message); }
     }
   }
 }
@@ -192,10 +217,9 @@ async function sendAlerts(chatId, maxDays = 30) {
 function mainMenu(chatId) {
   return bot.sendMessage(chatId,
     `👋 *Driver Expiration Bot*\n\n` +
-    `🔴 Expired or <7 days\n` +
-    `🟠 7–14 days\n` +
-    `🟡 15–30 days\n` +
-    `🟢 30+ days\n\n` +
+    `🔴 Critical — 0 to 3 days\n` +
+    `🟠 Warning — 4 to 10 days\n` +
+    `🟡 Upcoming — 11 to 30 days\n\n` +
     `Last sync: ${lastSync || 'Not yet'}`,
     {
       parse_mode: 'Markdown',

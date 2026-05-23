@@ -197,13 +197,13 @@ async function sendAlerts(chatId, maxDays = 30) {
       const msg =
         `🏢 ${company}\n\n` +
         `👤 ${doc.driver}\n` +
-        `📄 ${label}\n` +
+        `📄 ${doc.doc}\n` +
         `📅 Expires: ${expDate}\n` +
-        `${em} ${d} days left  |  ${status}\n\n` +
-        `📨 DRIVER MESSAGE:\n` +
+        `${em} ${d} days left\n\n` +
+        `📨 DRIVER MESSAGE:\n\n` +
         `Hello ${driverTitle},\n\n` +
         `Your ${label} will expire on ${expDate}.\n\n` +
-        `Please provide the renewed copy as soon as possible.\n\n` +
+        `Please do not forget to renew it before the expiration date and send us the updated copy as soon as possible.\n\n` +
         `Thank you,\n` +
         `ALGO SAFETY\n\n` +
         `-----------------------------------`;

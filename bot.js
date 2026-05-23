@@ -192,7 +192,7 @@ function mainMenu(chatId) {
         inline_keyboard: [
           [{ text: '🔔 Check Expirations', callback_data: 'check' }],
           [{ text: '🔄 Sync Google Sheet', callback_data: 'sync' }],
-          [{ text: '📋 Full List', callback_data: 'list' }, { text: '🏢 Companies', callback_data: 'companies' }],
+          [{ text: '🏢 Companies', callback_data: 'companies' }],
         ]
       }
     }

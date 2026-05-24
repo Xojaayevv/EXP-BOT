@@ -26,6 +26,25 @@ let lastSync = null;
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 
+function tgPost(method, body) {
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify(body);
+    const req = https.request({
+      hostname: 'api.telegram.org',
+      path: `/bot${TOKEN}/${method}`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }
+    }, (res) => {
+      let out = '';
+      res.on('data', c => out += c);
+      res.on('end', () => resolve(JSON.parse(out)));
+    });
+    req.on('error', reject);
+    req.write(data);
+    req.end();
+  });
+}
+
 function fetchUrl(url) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 15000 }, (res) => {
@@ -210,7 +229,9 @@ async function sendAlerts(chatId, maxDays = 30) {
         driverMsg;
 
       try {
-        await bot.sendMessage(chatId, infoMsg, {
+        await tgPost('sendMessage', {
+          chat_id: chatId,
+          text: infoMsg,
           reply_markup: {
             inline_keyboard: [[
               { text: '📋 Copy Driver Message', copy_text: { text: driverMsg } }

@@ -297,11 +297,17 @@ bot.on('callback_query', async (q) => {
   if (q.data === 'companies') {
     const companies = [...new Set(records.map(r => r.company))].sort();
     if (companies.length === 0) return bot.sendMessage(chatId, 'No data. Tap Sync first.');
+    let totalDrivers = 0;
     const text = companies.map((c, i) => {
       const drivers = new Set(records.filter(r => r.company === c).map(r => r.driver)).size;
+      totalDrivers += drivers;
       return `${i + 1}. ${c} — ${drivers} drivers`;
     }).join('\n');
-    await bot.sendMessage(chatId, `🏢 *Companies (${companies.length})*\n\n${text}`, { parse_mode: 'Markdown' });
+    await bot.sendMessage(chatId,
+      `🏢 *Companies (${companies.length})*\n\n${text}\n\n` +
+      `📊 *Total: ${companies.length} companies | ${totalDrivers} drivers*`,
+      { parse_mode: 'Markdown' }
+    );
     await mainMenu(chatId);
   }
 });
@@ -332,11 +338,17 @@ bot.onText(/\/check/, async (msg) => {
 bot.onText(/\/companies/, (msg) => {
   const companies = [...new Set(records.map(r => r.company))].sort();
   if (companies.length === 0) return bot.sendMessage(msg.chat.id, 'No data. Use /sync first.');
+  let totalDrivers = 0;
   const text = companies.map((c, i) => {
     const drivers = new Set(records.filter(r => r.company === c).map(r => r.driver)).size;
+    totalDrivers += drivers;
     return `${i + 1}. ${c} — ${drivers} drivers`;
   }).join('\n');
-  bot.sendMessage(msg.chat.id, `🏢 *Companies (${companies.length})*\n\n${text}`, { parse_mode: 'Markdown' });
+  bot.sendMessage(msg.chat.id,
+    `🏢 *Companies (${companies.length})*\n\n${text}\n\n` +
+    `📊 *Total: ${companies.length} companies | ${totalDrivers} drivers*`,
+    { parse_mode: 'Markdown' }
+  );
 });
 
 // Daily 8:00 AM

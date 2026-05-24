@@ -294,30 +294,6 @@ bot.on('callback_query', async (q) => {
     await mainMenu(chatId);
   }
 
-  if (q.data === 'list') {
-    const active = records;
-    if (active.length === 0) return bot.sendMessage(chatId, '📋 No data. Tap Sync first.');
-    const byCompany = {};
-    for (const r of active) {
-      if (!byCompany[r.company]) byCompany[r.company] = {};
-      if (!byCompany[r.company][r.driver]) byCompany[r.company][r.driver] = [];
-      byCompany[r.company][r.driver].push(r);
-    }
-    for (const [company, drivers] of Object.entries(byCompany)) {
-      let msg = `🏢 *${company}*\n\n`;
-      for (const [driver, docs] of Object.entries(drivers)) {
-        msg += `👤 ${driver}\n`;
-        for (const doc of docs) {
-          msg += `  ${emoji(daysUntil(doc.date))} ${doc.doc}: ${fmtDate(doc.date)}\n`;
-        }
-        msg += '\n';
-      }
-      try { await bot.sendMessage(chatId, msg, { parse_mode: 'Markdown' }); }
-      catch (e) { await bot.sendMessage(chatId, msg.replace(/[*_[\]()~>#+=|{}.!]/g, '')); }
-    }
-    await mainMenu(chatId);
-  }
-
   if (q.data === 'companies') {
     const companies = [...new Set(records.map(r => r.company))].sort();
     if (companies.length === 0) return bot.sendMessage(chatId, 'No data. Tap Sync first.');
@@ -352,39 +328,13 @@ bot.onText(/\/check/, async (msg) => {
   await sendAlerts(msg.chat.id, 30);
 });
 
-// /list
-bot.onText(/\/list/, async (msg) => {
-  const active = records;
-  if (active.length === 0) return bot.sendMessage(msg.chat.id, '📋 No data. Use /sync first.');
-
-  const byCompany = {};
-  for (const r of active) {
-    if (!byCompany[r.company]) byCompany[r.company] = {};
-    if (!byCompany[r.company][r.driver]) byCompany[r.company][r.driver] = [];
-    byCompany[r.company][r.driver].push(r);
-  }
-
-  for (const [company, drivers] of Object.entries(byCompany)) {
-    let msg = `🏢 *${company}*\n\n`;
-    for (const [driver, docs] of Object.entries(drivers)) {
-      msg += `👤 ${driver}\n`;
-      for (const doc of docs) {
-        msg += `  ${emoji(daysUntil(doc.date))} ${doc.doc}: ${fmtDate(doc.date)}\n`;
-      }
-      msg += '\n';
-    }
-    try { await bot.sendMessage(msg.chat.id, msg, { parse_mode: 'Markdown' }); }
-    catch (e) { await bot.sendMessage(msg.chat.id, msg.replace(/[*_[\]()~>#+=|{}.!]/g, '')); }
-  }
-});
-
 // /companies
 bot.onText(/\/companies/, (msg) => {
   const companies = [...new Set(records.map(r => r.company))].sort();
   if (companies.length === 0) return bot.sendMessage(msg.chat.id, 'No data. Use /sync first.');
   const text = companies.map((c, i) => {
-    const count = records.filter(r => r.company === c).length;
-    return `${i + 1}. ${c} (${count} docs)`;
+    const drivers = new Set(records.filter(r => r.company === c).map(r => r.driver)).size;
+    return `${i + 1}. ${c} — ${drivers} drivers`;
   }).join('\n');
   bot.sendMessage(msg.chat.id, `🏢 *Companies (${companies.length})*\n\n${text}`, { parse_mode: 'Markdown' });
 });

@@ -206,11 +206,17 @@ async function sendAlerts(chatId, maxDays = 30) {
         `📄 ${doc.doc}\n` +
         `📅 Expires: ${expDate}\n` +
         `${em} ${d} days left\n\n` +
-        `📨 DRIVER MESSAGE: ⬇️ (hold to copy)`;
+        `📨 DRIVER MESSAGE:\n\n` +
+        driverMsg;
 
       try {
-        await bot.sendMessage(chatId, infoMsg);
-        await bot.sendMessage(chatId, driverMsg);
+        await bot.sendMessage(chatId, infoMsg, {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '📋 Copy Driver Message', copy_text: { text: driverMsg } }
+            ]]
+          }
+        });
       }
       catch (e) { console.error('Send error:', e.message); }
     }

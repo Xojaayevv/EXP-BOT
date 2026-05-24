@@ -351,8 +351,8 @@ bot.onText(/\/companies/, (msg) => {
   );
 });
 
-// Daily 8:00 AM
-cron.schedule('0 8 * * *', async () => {
+// Daily 4:00 AM Uzbekistan time (UTC+5 = 23:00 UTC)
+cron.schedule('0 23 * * *', async () => {
   if (!CHAT_ID) return;
   try {
     await bot.sendMessage(CHAT_ID, '🔔 *Daily Expiration Check*', { parse_mode: 'Markdown' });
